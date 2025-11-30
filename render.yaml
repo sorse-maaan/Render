@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: qeng-stripe
+    env: docker
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./Dockerfile
+    numInstances: 1
