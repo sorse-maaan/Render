@@ -24,8 +24,8 @@ $post_data = [
     'line_items[0][quantity]' => 1,
     'mode' => 'payment',
     // success / cancel — заміни на свій Render URL
-    'success_url' => 'https://YOUR_RENDER_URL/success.php?session_id={CHECKOUT_SESSION_ID}',
-    'cancel_url' => 'https://YOUR_RENDER_URL/cancel.php',
+    'success_url' => 'https://render-3tbz.onrender.com/success.php?session_id={CHECKOUT_SESSION_ID}',
+    'cancel_url' => 'https://render-3tbz.onrender.com/cancel.php',
     // metadata — передаємо назву команди та email
     'metadata[team_name]' => $team_name,
     'metadata[email]' => $email
