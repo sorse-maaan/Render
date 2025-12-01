@@ -1,5 +1,6 @@
 <?php
 // webhook.php для Stripe → Qeng
+// Робоча версія на основі перевіреного раннішнього коду
 
 // Отримуємо payload від Stripe
 $payload = @file_get_contents('php://input');
@@ -7,14 +8,14 @@ file_put_contents('debug_webhook.txt', $payload); // лог для переві�
 
 $event = json_decode($payload, true);
 
-if (!$event) {
+if(!$event) {
     http_response_code(400);
     echo json_encode(['status'=>'invalid payload']);
     exit;
 }
 
-// Обробка лише події завершення оплати
-if ($event['type'] === 'checkout.session.completed') {
+// Перевіряємо тип події Stripe
+if($event['type'] === 'checkout.session.completed') {
     $session = $event['data']['object'];
 
     $team_name = $session['metadata']['team_name'] ?? 'DefaultTeam';
@@ -37,16 +38,15 @@ if ($event['type'] === 'checkout.session.completed') {
     $cookie_path = __DIR__ . "/cookies/qeng_cookie.txt";
     $auth_result = auth('alexem','{Q_W)9m12f',$cookie_path);
 
-    if (isset($auth_result['error'])) {
+    if(isset($auth_result['error'])) {
         http_response_code(500);
-        echo json_encode(['status'=>'auth_failed','auth_result'=>$auth_result]);
+        echo json_encode(['status'=>'auth_failed', 'auth_result'=>$auth_result]);
         exit;
     }
 
-    // --- Створення команди динамічно ---
+    // --- Створення команди ---
     $url = 'https://consensus.qeng.org/admin/game_teams.php?gid=5181&json';
-    $data = [$team_name];
-    $data_string = json_encode($data);
+    $data_string = json_encode([$team_name]);
 
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_path);
@@ -59,26 +59,25 @@ if ($event['type'] === 'checkout.session.completed') {
     $result_data = json_decode($result, true);
     curl_close($ch);
 
-    // --- Перевірка результату ---
-    if (!empty($result_data[0]['id']) && !empty($result_data[0]['access_key'])) {
+    // --- Формуємо посилання на гру ---
+    if(!empty($result_data[0]['id']) && !empty($result_data[0]['access_key'])){
         $team_id = $result_data[0]['id'];
         $key = $result_data[0]['access_key'];
-        $link = "https://consensus.qeng.org/game/5181/?team_id=$team_id&key=$key&lang=ua";
+        $link = "https://consensus.qeng.org/game/5181/?team_id=$team_id&key=$key&lang=auto";
 
         // Логування
         file_put_contents('teams_log.txt', "$team_name | $email | $link\n", FILE_APPEND);
 
         http_response_code(200);
-        echo json_encode(['status'=>'team_created','link'=>$link]);
+        echo json_encode(['status'=>'team_created', 'link'=>$link, 'result'=>$result_data]);
         exit;
     } else {
-        // Якщо є помилка створення команди
         http_response_code(500);
-        echo json_encode(['status'=>'error_creating_team','result'=>$result_data]);
+        echo json_encode(['status'=>'error_creating_team', 'result'=>$result_data]);
         exit;
     }
 }
 
-// Інші події
+// Інші події Stripe
 http_response_code(200);
 echo json_encode(['status'=>'ignored']);
